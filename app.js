@@ -16,7 +16,7 @@
     PRIZE_TEXT: '',               // e.g. 'Top 3 account values after month 7 win a small prize.'
     CONTACT_TEXT: '',             // e.g. 'Questions? Contact Group 4, Behavioral Finance.'
     DONE_KEY: 'trade_taranga_done_v2',
-    VERSION: '2.2'
+    VERSION: '2.3'
   };
 
   const SET = STUDY.setup;
@@ -111,12 +111,15 @@
     return Object.assign({}, r.ai);
   }
   function value() { return S.shares * S.price + S.cash; }
-  function canDo(a) {
-    if (a === 'BUY') return S.cash >= SET.lot * S.price * (1 + SET.fee);
-    if (a === 'SELL') return S.shares >= SET.lot;
-    return true;
+  // Largest trade (in steps of SET.lot, up to SET.maxLot) the player can afford right now
+  function maxQty(a) {
+    const step = SET.lot, cap = SET.maxLot || SET.lot;
+    let n = 0;
+    if (a === 'BUY') n = Math.floor(S.cash / (step * S.price * (1 + SET.fee))) * step;
+    if (a === 'SELL') n = Math.floor(S.shares / step) * step;
+    return a === 'HOLD' ? 0 : Math.min(cap, n);
   }
-  function tradeCost() { return SET.lot * S.price; }
+  function canDo(a) { return a === 'HOLD' || maxQty(a) >= SET.lot; }
 
   /* ------------------------------------------------------------------
      Timer (soft: shows pace, never decides for the player)
@@ -270,7 +273,7 @@
       <header class="hero">
         <p class="kicker">Investing challenge</p>
         <h1>You’re now a ${CO.name} shareholder</h1>
-        <p>Manage a ₹15 lakh portfolio for ${CONFIG.REQUIRED_ROUNDS} months. Each month brings news. Read it, make your call, and grow your money. After that, keep trading as long as you like.</p>
+        <p>Manage a ₹${Math.round(START_VALUE / 100000)} lakh portfolio for ${CONFIG.REQUIRED_ROUNDS} months. Each month brings news. Read it, make your call, and grow your money. After that, keep trading as long as you like.</p>
       </header>
       <div class="card">
         <div class="stake">
@@ -318,7 +321,7 @@
       <div class="card">
         <h2>Each month</h2>
         <ol class="steps">
-          <li><span>Read the news and make your call: <b>buy 100 shares</b>, <b>sell 100</b>, or <b>hold</b>.</span></li>
+          <li><span>Read the news and make your call: <b>buy</b>, <b>sell</b> or <b>hold</b>. Choose ${SET.lot} to ${SET.maxLot || SET.lot} shares per trade.</span></li>
           <li><span>${AI_NAME} shows its forecast and advice.</span></li>
           <li><span>Keep your decision, or switch to ${AI_NAME}’s.</span></li>
           <li><span>See what the market did, and how accurate ${AI_NAME} was.</span></li>
@@ -414,9 +417,9 @@
 
     const rec = {
       round: r.round, phase: bonus ? 'bonus' : 'main',
-      initial_choice: '', initial_ms: 0, initial_overtime_ms: 0,
+      initial_choice: '', initial_qty: 0, initial_ms: 0, initial_overtime_ms: 0,
       ai_rec: adv.rec, ai_pred_pct: adv.pred, ai_conf: adv.conf, ai_correct: adv.rec === (r.actual / 100 > SET.fee ? 'BUY' : r.actual / 100 < -SET.fee ? 'SELL' : 'HOLD'),
-      agreed: false, final_choice: '', switched: false, final_follows_ai: false, final_ms: 0,
+      agreed: false, final_choice: '', final_qty: 0, switched: false, final_follows_ai: false, final_ms: 0,
       ai_blocked: false, constrained: constrained, confidence: null,
       actual_pct: r.actual, price_after: r.priceAfter, shares_after: 0, cash_after: 0, account_after: 0
     };
@@ -424,23 +427,52 @@
     // Stage 1: own decision
     const dock = $('#dock');
     let choice = null;
-    dock.innerHTML = `<div class="prompt">Your call this month<span>${SET.lot} shares ≈ ${inr(tradeCost())}</span></div>
+    let qty = SET.lot;
+    const MAXQ = SET.maxLot || SET.lot;
+    dock.innerHTML = `<div class="prompt">Your call this month</div>
       <div class="acts">${ACTIONS.map((a) => `<button type="button" class="act ${a}" data-v="${a}" aria-pressed="false"${opts[a] ? '' : ' disabled'}>
-        <b>${LABEL[a]}</b><small>${a === 'HOLD' ? 'No trade' : (opts[a] ? (a === 'BUY' ? '+' : '−') + SET.lot + ' shares' : (a === 'BUY' ? 'Not enough cash' : 'No shares left'))}</small></button>`).join('')}</div>
+        <b>${LABEL[a]}</b><small>${a === 'HOLD' ? 'No trade' : (opts[a] ? (a === 'BUY' ? 'More shares' : 'Fewer shares') : (a === 'BUY' ? 'Not enough cash' : 'No shares left'))}</small></button>`).join('')}</div>
+      <div class="qty" id="qtybox" aria-disabled="true">
+        <div class="qty-head"><label for="qty">Shares</label><span class="num" id="qtyval"></span></div>
+        <input type="range" id="qty" min="${SET.lot}" max="${MAXQ}" step="${SET.lot}" value="${SET.lot}" disabled>
+        <div class="qty-ticks num">${Array.from({ length: MAXQ / SET.lot }, (_, i) => `<span>${(i + 1) * SET.lot}</span>`).join('')}</div>
+      </div>
       <button class="btn" id="lock" disabled>Lock in my decision</button>`;
+    const slider = $('#qty');
+    const showQty = () => {
+      const box = $('#qtybox'), val = $('#qtyval');
+      if (!choice || choice === 'HOLD') {
+        slider.disabled = true; box.setAttribute('aria-disabled', 'true');
+        val.textContent = choice === 'HOLD' ? 'No trade' : 'Pick Buy or Sell first';
+        return;
+      }
+      const cap = maxQty(choice);
+      if (qty > cap) qty = cap;
+      slider.disabled = false; box.removeAttribute('aria-disabled');
+      slider.value = qty;
+      slider.style.setProperty('--fill', ((qty - SET.lot) / Math.max(1, MAXQ - SET.lot) * 100) + '%');
+      val.textContent = `${LABEL[choice]} ${qty} ≈ ${inr(qty * S.price)}${cap < MAXQ ? `  (max ${cap})` : ''}`;
+    };
+    slider.addEventListener('input', () => {
+      const cap = maxQty(choice);
+      qty = Math.min(Number(slider.value), cap);
+      showQty();
+    });
+    showQty();
     syncDock();
     startTimer(CONFIG.DECIDE_SECONDS);
-    bindGroup('.act', (v) => { choice = v; $('#lock').disabled = false; });
+    bindGroup('.act', (v) => { choice = v; $('#lock').disabled = false; showQty(); syncDock(); });
     $('#lock').onclick = () => {
       const t = stopTimer();
       rec.initial_choice = choice; rec.initial_ms = t ? t.ms : 0; rec.initial_overtime_ms = t ? t.over : 0;
+      rec.initial_qty = choice === 'HOLD' ? 0 : qty;
       rec.agreed = choice === adv.rec;
       stageKosha();
     };
 
     // Stage 2: Kosha's view, then keep or switch
     function stageKosha() {
-      dock.innerHTML = `<div class="prompt">You chose <span class="tag-act ${choice}">${LABEL[choice]}</span></div><p class="muted small">Waiting for ${AI_NAME}…</p>`;
+      dock.innerHTML = `<div class="prompt">You chose <span class="tag-act ${choice}">${LABEL[choice]}${choice === 'HOLD' ? '' : ' ' + rec.initial_qty}</span></div><p class="muted small">Waiting for ${AI_NAME}…</p>`;
       syncDock();
       const slot = $('#kosha-slot');
       slot.innerHTML = `<div class="card kosha pop"><div class="kosha-head"><div class="kosha-mark">K</div><div><strong>${AI_NAME} AI</strong><span>${recordLine()}</span></div></div>
@@ -458,28 +490,32 @@
         redrawCharts();
         const blocked = !rec.agreed && !canDo(adv.rec);
         rec.ai_blocked = blocked;
+        // Switching keeps the size the player picked (100 if they held), capped at what they can afford
+        const switchQty = adv.rec === 'HOLD' ? 0 : Math.min(choice === 'HOLD' ? qty : rec.initial_qty, maxQty(adv.rec));
+        const lbl = (a, q) => LABEL[a] + (a === 'HOLD' ? '' : ' ' + q);
         if (rec.agreed) {
           dock.innerHTML = `<div class="prompt">You and ${AI_NAME} agree</div>
-            <button class="btn" id="keep">Confirm ${LABEL[choice]}</button>`;
+            <button class="btn" id="keep">Confirm ${lbl(choice, rec.initial_qty)}</button>`;
         } else {
           dock.innerHTML = `<div class="prompt">${AI_NAME} disagrees<span>Keep or switch?</span></div>
-            <div class="two"><button class="btn quiet" id="keep">Keep ${LABEL[choice]}</button>
-            <button class="btn switch" id="switch"${blocked ? ' disabled' : ''}>Switch to ${LABEL[adv.rec]}</button></div>
+            <div class="two"><button class="btn quiet" id="keep">Keep ${lbl(choice, rec.initial_qty)}</button>
+            <button class="btn switch" id="switch"${blocked ? ' disabled' : ''}>Switch to ${lbl(adv.rec, switchQty)}</button></div>
             ${blocked ? `<p class="muted small" style="margin-top:6px">You can’t ${LABEL[adv.rec].toLowerCase()} right now (${adv.rec === 'BUY' ? 'not enough cash' : 'no shares left'}).</p>` : ''}`;
         }
         syncDock();
         startTimer(CONFIG.SWITCH_SECONDS);
-        $('#keep').onclick = () => finalize(choice);
-        const sw = $('#switch'); if (sw) sw.onclick = () => finalize(adv.rec);
+        $('#keep').onclick = () => finalize(choice, rec.initial_qty);
+        const sw = $('#switch'); if (sw) sw.onclick = () => finalize(adv.rec, switchQty);
       }, CONFIG.THINK_MS);
     }
 
     // Stage 3: record the final decision and execute it straight away
     // (the per-month confidence question was removed in v2.2; the confidence field is sent blank)
-    function finalize(finalChoice) {
+    function finalize(finalChoice, finalQty) {
       const t = stopTimer();
       rec.final_ms = t ? t.ms : 0;
       rec.final_choice = finalChoice;
+      rec.final_qty = finalChoice === 'HOLD' ? 0 : finalQty;
       rec.switched = !rec.agreed && finalChoice === adv.rec;
       rec.final_follows_ai = finalChoice === adv.rec;
       dock.innerHTML = '';
@@ -487,7 +523,7 @@
     }
 
     function execute() {
-      const p0 = S.price, a = rec.final_choice, lot = SET.lot;
+      const p0 = S.price, a = rec.final_choice, lot = rec.final_qty;
       if (a === 'BUY') { S.shares += lot; S.cash -= lot * p0 * (1 + SET.fee); }
       if (a === 'SELL') { S.shares -= lot; S.cash += lot * p0 * (1 - SET.fee); }
       const before = value();
@@ -515,7 +551,7 @@
             <span class="num">Forecast ${pct(adv.pred)}, actual ${pct(r.actual)}: direction ${dirOk ? '✓' : '✗'}, off by ${miss.toFixed(1)} points</span>
             <span class="why-line">${adv.review}</span></div>
           <dl class="ledger num">
-            <div><dt>Your decision</dt><dd><span class="tag-act ${a}">${LABEL[a]}</span>${rec.switched ? ` <span class="label">(switched to ${AI_NAME})</span>` : ''}</dd></div>
+            <div><dt>Your decision</dt><dd><span class="tag-act ${a}">${LABEL[a]}${a === 'HOLD' ? '' : ' ' + lot}</span>${rec.switched ? ` <span class="label">(switched to ${AI_NAME})</span>` : ''}</dd></div>
             <div><dt>Effect of your trade</dt><dd class="${effect > 0 ? 'up' : effect < 0 ? 'down' : ''}">${a === 'HOLD' ? 'No trade' : signedInr(effect) + ' vs holding'}</dd></div>
             <div><dt>Account value</dt><dd>${inr(after)}</dd></div>
             <div><dt>${AI_NAME}’s record</dt><dd class="label" style="font-weight:500">${S.rec.hits} of ${S.rec.n} right</dd></div>
@@ -633,7 +669,7 @@
           <thead><tr><th>Month</th><th>You</th><th>${AI_NAME}</th><th>Final</th><th>Market</th></tr></thead>
           <tbody>${S.rounds.map((x) => `<tr><td>${x.round}</td><td>${LABEL[x.initial_choice]}</td>
             <td><span class="${x.ai_correct ? '' : 'down'}">${LABEL[x.ai_rec]}${x.ai_correct ? '' : ' ✗'}</span></td>
-            <td><b>${LABEL[x.final_choice]}</b>${x.switched ? ' <span class="label">switched</span>' : ''}</td>
+            <td><b>${LABEL[x.final_choice]}${x.final_choice === 'HOLD' ? '' : ' ' + x.final_qty}</b>${x.switched ? ' <span class="label">switched</span>' : ''}</td>
             <td class="${cls(x.actual_pct)}">${pct(x.actual_pct)}</td></tr>`).join('')}</tbody></table></div></div>
       <button class="btn quiet" id="dl">Download my responses</button></div>`);
     $('#dl').onclick = download;
@@ -668,7 +704,7 @@
     if (st === 'failed') S.bonusFails++;
   }
   const RKEYS = ['round', 'phase', 'initial_choice', 'initial_ms', 'initial_overtime_ms', 'ai_rec', 'ai_pred_pct', 'ai_conf', 'ai_correct', 'agreed',
-    'final_choice', 'switched', 'final_follows_ai', 'final_ms', 'ai_blocked', 'constrained', 'confidence', 'actual_pct', 'price_after', 'shares_after', 'cash_after', 'account_after'];
+    'final_choice', 'switched', 'final_follows_ai', 'final_ms', 'ai_blocked', 'constrained', 'confidence', 'actual_pct', 'price_after', 'shares_after', 'cash_after', 'account_after', 'initial_qty', 'final_qty'];
   function download() {
     const p = participantRecord(), pk = Object.keys(p), head = pk.concat(RKEYS);
     const esc = (v) => { const s = String(v === undefined || v === null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };

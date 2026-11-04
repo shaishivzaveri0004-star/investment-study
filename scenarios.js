@@ -35,9 +35,10 @@ const STUDY = {
  },
  "setup": {
   "price": 500,
-  "shares": 1500,
-  "cash": 750000,
+  "shares": 3000,
+  "cash": 1500000,
   "lot": 100,
+  "maxLot": 500,
   "fee": 0.005
  },
  "historyMonths": [
