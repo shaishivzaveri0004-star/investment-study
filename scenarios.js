@@ -1,218 +1,1237 @@
 /*
-  Scenario script for the AI trust study.
-  All companies and tokens are fictional.
+  Study content for Trade Taranga. Generated from the reviewed storyline. Everything is fictional.
 
-  outcome : % price change in the period after the decision
-  best    : the action with the highest payoff, given the payoff rule in app.js
-            (BUY earns outcome - fee, SELL earns -outcome - fee, HOLD earns 0)
-  ai      : the AI Advisor's advice when it is right (it always recommends "best")
-  wrong   : the deliberately wrong advice, shown ONLY in the error group, ONLY in
-            the error round. Every scenario used as an "error" scenario in
-            ORDERS must have one.
-
-  app.js checks on load that "best" matches the payoff rule and warns in the
-  browser console if you edit a scenario and break this.
+  rounds[].ai     : Kosha's advice. Right in every month except bonus months 13, 18 and 22,
+                    where it is wrong for every player. ai.review is the one-line reason shown after.
+  rounds[].wrong  : the deliberately wrong advice, shown ONLY to the error group, ONLY in their
+                    randomly drawn error month (months 2 to 4 have one)
+  rounds[].actual : the real % move that month; priceBefore/priceAfter follow from it
+  rounds[].path   : daily price points for the chart (same for every player)
 */
-
-const SCENARIOS = {
-  S1: {
-    id: 'S1',
-    name: 'Kestrel Logistics',
-    ticker: 'KSTL',
-    type: 'Mid-cap stock, logistics',
-    headline: 'Shares have slipped this month as investors worry about a slowdown in freight demand across the sector.',
-    facts: [
-      '1-month return: −6%',
-      'Q2 shipment volumes: +11% year on year',
-      'Management reaffirmed full-year guidance last week',
-      'P/E of 18 vs sector average of 22'
-    ],
-    outcome: 7.8,
-    best: 'BUY',
-    ai: { conf: 74, why: 'The selloff tracks sector sentiment rather than company results. Volumes are growing, guidance is intact, and the valuation sits below peers. The setup favors a rebound.' },
-    note: 'Kestrel’s monthly volume update beat expectations and the stock recovered its losses.'
+const STUDY = {
+ "company": {
+  "name": "Taranga Mobility",
+  "legal": "Taranga Mobility Ltd",
+  "ticker": "TARANGA",
+  "about": "Makes battery packs and motors for electric scooters and bikes. Based in Pune, it supplies 4 of India’s top 10 scooter makers.",
+  "stats": [
+   [
+    "Revenue (last year)",
+    "₹2,400 cr"
+   ],
+   [
+    "Listed",
+    "2021"
+   ],
+   [
+    "P/E",
+    "32 (sector 30)"
+   ],
+   [
+    "Size",
+    "Mid-cap"
+   ]
+  ]
+ },
+ "setup": {
+  "price": 500,
+  "shares": 1500,
+  "cash": 750000,
+  "lot": 100,
+  "fee": 0.005
+ },
+ "historyMonths": [
+  [
+   468.0,
+   471.37,
+   475.03,
+   478.86,
+   485.08,
+   489.02,
+   491.23,
+   494.37,
+   501.89,
+   503.63,
+   508.66,
+   506.39,
+   498.13,
+   496.85,
+   491.36,
+   493.46,
+   492.06,
+   500.48,
+   495.06,
+   490.92,
+   489.0
+  ],
+  [
+   489.0,
+   478.09,
+   474.26,
+   465.82,
+   468.33,
+   465.27,
+   470.75,
+   458.2,
+   455.35,
+   467.88,
+   472.63,
+   465.44,
+   465.83,
+   471.78,
+   469.6,
+   476.23,
+   479.45,
+   473.69,
+   468.11,
+   472.0,
+   476.0
+  ],
+  [
+   476.0,
+   479.67,
+   481.55,
+   477.18,
+   474.02,
+   478.68,
+   481.42,
+   483.77,
+   483.2,
+   491.07,
+   496.44,
+   499.49,
+   500.94,
+   496.06,
+   501.93,
+   496.81,
+   498.92,
+   506.43,
+   507.37,
+   506.22,
+   500.0
+  ]
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "headline": "Quarterly results beat estimates: revenue +18%",
+   "tone": "Positive",
+   "facts": [
+    "Analysts expected +13%",
+    "Operating margin up from 10.8% to 11.6%",
+    "Order book at a record ₹3,100 crore"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 5.0,
+    "conf": 71,
+    "why": "Results beat on both revenue and margin, and the order book supports the next two quarters. Estimate upgrades usually follow.",
+    "review": "Kosha was right: the margin beat, not just revenue, drove analyst upgrades."
+   },
+   "actual": 5.6,
+   "priceBefore": 500.0,
+   "priceAfter": 528.0,
+   "note": "Brokerages raised their targets after the results.",
+   "path": [
+    500.0,
+    492.19,
+    495.27,
+    502.74,
+    506.6,
+    498.85,
+    491.49,
+    495.23,
+    496.32,
+    497.41,
+    494.3,
+    487.57,
+    483.2,
+    495.56,
+    508.58,
+    518.7,
+    520.68,
+    522.45,
+    524.99,
+    529.19,
+    528.0
+   ]
   },
-
-  S2: {
-    id: 'S2',
-    name: 'Orrin Foods',
-    ticker: 'ORFD',
-    type: 'Large-cap stock, packaged foods',
-    headline: 'A celebrity’s social-media post featuring Orrin’s new snack went viral, and the stock jumped.',
-    facts: [
-      '2-week return: +14%',
-      'Trading volume: 5× its 3-month average',
-      'Analyst earnings estimates: unchanged',
-      'P/E of 46 vs sector average of 38'
-    ],
-    outcome: -8.6,
-    best: 'SELL',
-    ai: { conf: 71, why: 'The rally is driven by attention, not earnings. Estimates haven’t moved and the stock now trades well above sector multiples. Attention-driven spikes like this tend to fade.' },
-    note: 'As the post faded from feeds, trading volume normalized and the stock gave back most of its gains.'
+  {
+   "round": 2,
+   "headline": "Taranga signs a supply deal with a fast-growing EV startup",
+   "tone": "Positive",
+   "facts": [
+    "The deal is worth ₹600 crore over two years",
+    "The startup has missed two funding rounds this year",
+    "Taranga must build dedicated capacity before deliveries start"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -7.0,
+    "conf": 76,
+    "why": "The startup’s funding troubles put the order at risk, and Taranga has to spend on capacity before seeing any revenue. The headline overstates the deal.",
+    "review": "Kosha was right: it weighed the startup’s funding problems above the headline deal value."
+   },
+   "actual": -8.6,
+   "priceBefore": 528.0,
+   "priceAfter": 482.6,
+   "note": "Reports that the startup was struggling to raise money hit the stock.",
+   "path": [
+    528.0,
+    528.41,
+    519.61,
+    515.61,
+    507.36,
+    511.61,
+    515.04,
+    512.27,
+    515.95,
+    512.27,
+    508.85,
+    511.16,
+    513.72,
+    513.35,
+    508.37,
+    502.38,
+    494.19,
+    493.87,
+    484.77,
+    481.3,
+    482.6
+   ],
+   "wrong": {
+    "rec": "BUY",
+    "pred": 6.0,
+    "conf": 83,
+    "why": "A fast-growing new customer diversifies revenue, and dedicated capacity signals a long-term partnership. Deals like this usually lift the stock.",
+    "review": "Kosha was wrong: it focused on the deal size and underweighted the risk that the startup couldn’t pay."
+   }
   },
-
-  S3: {
-    id: 'S3',
-    name: 'Helix Pharma',
-    ticker: 'HLXP',
-    type: 'Mid-cap stock, pharmaceuticals',
-    headline: 'Helix is waiting for a regulatory decision on its lead drug, expected in about six weeks.',
-    facts: [
-      '1-month return: +1%',
-      'Decision date: about 6 weeks away',
-      'No new trial data expected before then',
-      'Options market implies only small near-term moves'
-    ],
-    outcome: 0.3,
-    best: 'HOLD',
-    ai: { conf: 66, why: 'The key catalyst is still weeks away and nothing material is scheduled before it. The expected near-term move is smaller than the 1% trading fee, so staying out is the better choice for now.' },
-    note: 'With no news before the decision, the stock drifted sideways.'
+  {
+   "round": 3,
+   "headline": "Taranga wins a ₹1,200 crore battery order from a state transport body",
+   "tone": "Positive",
+   "facts": [
+    "The order equals half of last year’s revenue",
+    "Payment terms: 180 days after delivery (industry norm: 60 days)",
+    "Promoter share pledge rose from 8% to 22% this month"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -8.0,
+    "conf": 77,
+    "why": "The order looks big, but 180-day payment terms will strain working capital, and the jump in promoter pledging signals financial stress. The market is likely to focus on cash flow rather than the headline.",
+    "review": "Kosha was right: it flagged the 180-day payment terms and the rising promoter pledge before the market did."
+   },
+   "actual": -9.5,
+   "priceBefore": 482.6,
+   "priceAfter": 436.8,
+   "note": "A brokerage flagged the cash-flow strain, and lenders sold part of the pledged shares.",
+   "path": [
+    482.6,
+    479.27,
+    473.22,
+    475.58,
+    473.58,
+    472.21,
+    468.87,
+    473.75,
+    473.95,
+    464.76,
+    467.62,
+    457.21,
+    452.1,
+    447.19,
+    442.42,
+    435.38,
+    433.65,
+    433.08,
+    431.33,
+    431.2,
+    436.8
+   ],
+   "wrong": {
+    "rec": "BUY",
+    "pred": 7.0,
+    "conf": 84,
+    "why": "An order worth half of last year’s revenue transforms the growth outlook. Large government orders usually lift mid-cap suppliers over the following month.",
+    "review": "Kosha was wrong: it treated the order size as the whole story and missed the cash-flow and pledging risk."
+   }
   },
-
-  S4: {
-    id: 'S4',
-    name: 'Vantra Energy',
-    ticker: 'VNTE',
-    type: 'Small-cap stock, renewable energy',
-    headline: 'Vantra announced a large solar-panel supply order, and the stock has rallied.',
-    facts: [
-      '1-month return: +9%',
-      'New order: about 1.5× last year’s revenue',
-      'Promoter shares pledged: up from 12% to 31% this quarter',
-      'Net debt: up 40% year on year'
-    ],
-    outcome: -12.4,
-    best: 'SELL',
-    ai: { conf: 78, why: 'The order win is real, but the sharp rise in promoter pledging and debt points to financial stress. If pledged shares are sold, the price can fall quickly. The risk outweighs the upside.' },
-    wrong: { rec: 'BUY', conf: 83, why: 'The order significantly expands revenue visibility, and momentum in renewable stocks remains strong. Order flow this strong typically supports further upside in the near term.' },
-    note: 'Lenders sold some of the pledged shares after an early dip, triggering a sharp fall.'
+  {
+   "round": 4,
+   "headline": "Fire at the Chakan plant halts one of three production lines",
+   "tone": "Negative",
+   "facts": [
+    "No injuries; the damage is fully insured",
+    "The other two lines moved to three shifts; monthly output is down only 8%",
+    "Rival VoltEdge announced a battery recall the same week"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 7.0,
+    "conf": 74,
+    "why": "The fire is a short-term output hit that insurance covers, and the rival’s recall is likely to shift orders to Taranga. The selloff overstates the damage.",
+    "review": "Kosha was right: it saw that insurance and the rival’s recall outweighed the lost output."
+   },
+   "actual": 8.4,
+   "priceBefore": 436.8,
+   "priceAfter": 473.5,
+   "note": "Two scooter makers moved orders from VoltEdge to Taranga after the recall.",
+   "path": [
+    436.8,
+    444.06,
+    444.66,
+    447.06,
+    440.64,
+    444.51,
+    448.82,
+    453.95,
+    455.04,
+    451.24,
+    461.57,
+    458.35,
+    454.26,
+    459.91,
+    456.07,
+    458.95,
+    464.7,
+    461.67,
+    467.17,
+    468.77,
+    473.5
+   ],
+   "wrong": {
+    "rec": "SELL",
+    "pred": -6.0,
+    "conf": 82,
+    "why": "A plant shutdown during peak season risks missed deliveries and penalties. Production disruptions usually weigh on a stock for several months.",
+    "review": "Kosha was wrong: it assumed the shutdown would hurt deliveries and missed that the rival’s recall would send orders to Taranga."
+   }
   },
-
-  S5: {
-    id: 'S5',
-    name: 'Tidewater Bank',
-    ticker: 'TDBK',
-    type: 'Mid-cap stock, banking',
-    headline: 'Tidewater reported a cleaner loan book, but the stock barely reacted.',
-    facts: [
-      '1-month return: 0%',
-      'Bad-loan (NPA) ratio: improved from 3.1% to 2.4%',
-      'Announced its first dividend in three years',
-      'Price-to-book of 0.9 vs peer average of 1.3'
-    ],
-    outcome: 6.1,
-    best: 'BUY',
-    ai: { conf: 69, why: 'Asset quality is improving and the dividend signals confidence, yet the stock still trades below book value and below peers. The market looks slow to price this in.' },
-    note: 'Two brokerages upgraded the stock, and it moved closer to peer valuations.'
+  {
+   "round": 5,
+   "headline": "Lithium prices jump 20% in a month",
+   "tone": "Negative",
+   "facts": [
+    "Battery cells are 45% of Taranga’s costs",
+    "Contracts allow passing costs to customers only after two quarters",
+    "Rivals face the same pressure"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -8.0,
+    "conf": 72,
+    "why": "Higher lithium costs will squeeze margins for at least two quarters before price increases take effect.",
+    "review": "Kosha got the direction right but overestimated the fall: it didn’t know Taranga had locked in some supply at older prices."
+   },
+   "actual": -4.4,
+   "priceBefore": 473.5,
+   "priceAfter": 452.7,
+   "note": "The fall was milder than feared: Taranga said it had locked in part of its supply at older prices.",
+   "path": [
+    473.5,
+    471.06,
+    474.12,
+    462.18,
+    461.99,
+    458.56,
+    466.77,
+    469.35,
+    470.8,
+    467.69,
+    473.4,
+    471.31,
+    462.3,
+    456.7,
+    457.6,
+    461.54,
+    463.13,
+    458.53,
+    453.25,
+    447.12,
+    452.7
+   ]
   },
-
-  S6: {
-    id: 'S6',
-    name: 'Quanta Chain',
-    ticker: 'QNTA',
-    type: 'Crypto token',
-    headline: 'Quanta’s token surged on rumors of a listing on a major exchange.',
-    facts: [
-      '7-day return: +40%',
-      'Social-media mentions: 8× normal',
-      'Listing rumor: not confirmed by the exchange or the project',
-      'Large holders moved tokens onto exchanges this week'
-    ],
-    outcome: -15.2,
-    best: 'SELL',
-    ai: { conf: 80, why: 'The rally rests on an unconfirmed rumor and a surge in social chatter. Large holders moving tokens onto exchanges often signals plans to sell. The downside risk is high.' },
-    note: 'The exchange denied the listing rumor, and the token fell sharply.'
+  {
+   "round": 6,
+   "headline": "Major brokerage downgrades Taranga to Sell, citing EV subsidy cuts",
+   "tone": "Negative",
+   "facts": [
+    "The stock fell 4% last month on lithium costs",
+    "The subsidy cut applies mainly to low-end scooters (15% of Taranga’s sales)",
+    "Export orders, 40% of revenue, are not affected"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 4.5,
+    "conf": 74,
+    "why": "The downgrade assumes subsidy cuts hit Taranga broadly, but most of its revenue comes from exports and premium models. The risk looks overdone.",
+    "review": "Kosha got the direction right but underestimated the rebound: fund buying was stronger than its model expected."
+   },
+   "actual": 9.1,
+   "priceBefore": 452.7,
+   "priceAfter": 493.9,
+   "note": "Other analysts disagreed with the downgrade, and funds bought the dip.",
+   "path": [
+    452.7,
+    457.74,
+    450.47,
+    445.68,
+    448.05,
+    448.25,
+    453.55,
+    450.9,
+    458.69,
+    461.8,
+    459.08,
+    456.83,
+    463.91,
+    466.14,
+    474.88,
+    478.16,
+    478.1,
+    484.77,
+    482.08,
+    483.91,
+    493.9
+   ]
   },
-
-  S7: {
-    id: 'S7',
-    name: 'Meridian Textiles',
-    ticker: 'MRDT',
-    type: 'Small-cap stock, textile exports',
-    headline: 'The rupee weakened slightly against the dollar, a mild positive for exporters like Meridian.',
-    facts: [
-      '1-month return: −1%',
-      'Rupee vs dollar: weakened about 2% this month',
-      'Order book: stable, no new contracts',
-      'Next earnings report: next quarter'
-    ],
-    outcome: 0.6,
-    best: 'HOLD',
-    ai: { conf: 63, why: 'A weaker rupee helps margins slightly, but the effect is small and widely expected. With no catalyst before earnings, the likely move is too small to cover the trading fee.' },
-    note: 'The stock edged up slightly in quiet trading.'
+  {
+   "round": 7,
+   "headline": "Celebrity investor reveals a stake; Taranga trends on social media",
+   "tone": "Positive",
+   "facts": [
+    "Stake size: 0.4%, bought several months ago",
+    "Trading volume: 6× normal",
+    "No change to earnings estimates"
+   ],
+   "ai": {
+    "rec": "HOLD",
+    "pred": 0.2,
+    "conf": 66,
+    "why": "The buzz brings attention, not earnings. Retail spikes like this usually fade within days, and the expected move is smaller than the trading cost.",
+    "review": "Kosha was right: attention without new earnings faded, as it expected."
+   },
+   "actual": -0.3,
+   "priceBefore": 493.9,
+   "priceAfter": 492.4,
+   "note": "The early spike faded, and the stock ended the month flat.",
+   "path": [
+    493.9,
+    487.93,
+    486.92,
+    492.99,
+    498.47,
+    497.89,
+    494.62,
+    492.73,
+    494.9,
+    492.89,
+    494.46,
+    490.51,
+    489.76,
+    490.67,
+    490.68,
+    491.83,
+    489.75,
+    488.01,
+    487.71,
+    491.76,
+    492.4
+   ]
   },
-
-  S8: {
-    id: 'S8',
-    name: 'Sable Software',
-    ticker: 'SBLS',
-    type: 'Large-cap stock, IT services',
-    headline: 'Sable missed revenue estimates, and the stock dropped sharply on results day.',
-    facts: [
-      'Results-day move: −11%',
-      'Revenue: 2% below analyst estimates',
-      'New deal wins: highest in company history',
-      'Operating margin: up 1.2 percentage points'
-    ],
-    outcome: 9.4,
-    best: 'BUY',
-    ai: { conf: 76, why: 'The miss was small, while record deal wins and wider margins point to stronger quarters ahead. An 11% drop looks like an overreaction to one headline number.' },
-    note: 'After management highlighted the deal pipeline, the stock recovered most of the drop.'
+  {
+   "round": 8,
+   "headline": "CEO Rahul Menon resigns unexpectedly after nine years",
+   "tone": "Negative",
+   "facts": [
+    "Interim CEO: COO Priya Nair, who built the export business (now 35% of revenue)",
+    "The company says its ₹3,300 crore order book is unaffected",
+    "Two of five analysts cut their targets, citing leadership uncertainty"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 5.0,
+    "conf": 72,
+    "why": "The market is pricing in leadership risk, but the interim CEO ran the fastest-growing division and the order book is intact.",
+    "review": "Kosha was right: the interim CEO’s record and the intact order book mattered more than the surprise exit."
+   },
+   "actual": 5.6,
+   "priceBefore": 492.4,
+   "priceAfter": 520.0,
+   "note": "Nair’s first investor call reassured analysts, and the stock recovered.",
+   "path": [
+    492.4,
+    490.84,
+    486.77,
+    491.86,
+    499.98,
+    505.36,
+    511.02,
+    505.76,
+    507.03,
+    498.99,
+    506.93,
+    507.68,
+    512.34,
+    511.63,
+    512.22,
+    517.44,
+    525.66,
+    531.38,
+    529.78,
+    526.39,
+    520.0
+   ]
   },
-
-  S9: {
-    id: 'S9',
-    name: 'Northgate Realty',
-    ticker: 'NGRT',
-    type: 'Mid-cap stock, real estate',
-    headline: 'Northgate’s pre-sales are booming, but a local news report flagged delayed approvals for one of its projects.',
-    facts: [
-      '1-month return: +18%',
-      'Quarterly pre-sales: +25% year on year',
-      'Report: approvals delayed for its largest project (the company denies any issue)',
-      'Stock trades near its all-time high'
-    ],
-    outcome: -10.8,
-    best: 'SELL',
-    ai: { conf: 75, why: 'Strong pre-sales are already reflected in the 18% run-up. The approval issue is unresolved and concerns the largest project. At record highs, the risk of disappointment is underpriced.' },
-    wrong: { rec: 'BUY', conf: 84, why: 'Pre-sales momentum is exceptional and the company has denied the report. With demand this strong, the regulatory concern looks like noise, and momentum should continue.' },
-    note: 'The regulator confirmed a stay on the project, and the stock fell sharply.'
+  {
+   "round": 9,
+   "headline": "Taranga announces Southeast Asia expansion through a joint venture",
+   "tone": "Positive",
+   "facts": [
+    "Upfront investment: ₹400 crore, about one year of profits",
+    "JV partner: a small Vietnamese assembler with no EV track record",
+    "In the same release, domestic margin guidance was cut from 12% to 10%"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -9.0,
+    "conf": 79,
+    "why": "The expansion headline hides a margin guidance cut, and the investment is large relative to profits with an unproven partner.",
+    "review": "Kosha was right: it spotted the margin guidance cut buried in the expansion announcement."
+   },
+   "actual": -10.2,
+   "priceBefore": 520.0,
+   "priceAfter": 467.0,
+   "note": "Three brokerages cut profit estimates after studying the margin guidance.",
+   "path": [
+    520.0,
+    516.23,
+    514.09,
+    510.99,
+    515.05,
+    507.06,
+    502.9,
+    491.59,
+    481.11,
+    483.97,
+    484.18,
+    476.75,
+    477.9,
+    488.55,
+    485.88,
+    486.25,
+    475.66,
+    470.22,
+    463.49,
+    464.7,
+    467.0
+   ]
   },
-
-  S10: {
-    id: 'S10',
-    name: 'Cobalt Motors',
-    ticker: 'CBMT',
-    type: 'Large-cap stock, automobiles',
-    headline: 'Cobalt’s monthly sales came in line with expectations, ahead of a new model launch next quarter.',
-    facts: [
-      '1-month return: +0.5%',
-      'Monthly sales: in line with estimates',
-      'New model launch: next quarter',
-      'Stock has traded in a narrow range for three months'
-    ],
-    outcome: -0.4,
-    best: 'HOLD',
-    ai: { conf: 65, why: 'Sales matched expectations and the launch is still a quarter away, so there is no near-term catalyst. The expected move is smaller than the trading fee.' },
-    note: 'The stock moved sideways and closed slightly lower.'
+  {
+   "round": 10,
+   "headline": "Short-seller report alleges accounting irregularities",
+   "tone": "Negative",
+   "facts": [
+    "The report comes from a little-known overseas firm that holds a short position",
+    "Taranga’s auditor is a Big Four firm, with clean audit opinions for five years",
+    "The company published a point-by-point rebuttal within 24 hours"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 6.0,
+    "conf": 73,
+    "why": "The allegations repeat issues already disclosed in annual reports, and the rebuttal is backed by audited data. The concern is likely to fade quickly.",
+    "review": "Kosha was right: the allegations repeated old disclosures, and the audited rebuttal held up."
+   },
+   "actual": 7.2,
+   "priceBefore": 467.0,
+   "priceAfter": 500.6,
+   "note": "The regulator found no case to answer, and the stock recovered.",
+   "path": [
+    467.0,
+    468.5,
+    471.06,
+    473.58,
+    481.53,
+    488.54,
+    483.87,
+    487.77,
+    486.65,
+    482.33,
+    481.56,
+    492.16,
+    485.04,
+    486.78,
+    486.85,
+    484.5,
+    488.8,
+    487.27,
+    483.16,
+    491.89,
+    500.6
+   ]
+  },
+  {
+   "round": 11,
+   "headline": "Government announces a new EV incentive scheme",
+   "tone": "Positive",
+   "facts": [
+    "The scheme covers electric cars and buses",
+    "Two-wheelers, Taranga’s main market, are excluded",
+    "EV stocks rallied 3% on the day of the announcement"
+   ],
+   "ai": {
+    "rec": "HOLD",
+    "pred": 0.2,
+    "conf": 65,
+    "why": "The scheme mostly helps four-wheeler makers, so Taranga’s prospects barely change. The sector rally is unlikely to last for two-wheeler suppliers.",
+    "review": "Kosha was right: the scheme barely touched two-wheelers, so the rally didn’t last."
+   },
+   "actual": 0.3,
+   "priceBefore": 500.6,
+   "priceAfter": 502.1,
+   "note": "Taranga’s early gains faded by the end of the month.",
+   "path": [
+    500.6,
+    506.39,
+    506.25,
+    506.0,
+    512.86,
+    516.86,
+    522.11,
+    515.34,
+    515.4,
+    518.14,
+    518.03,
+    513.9,
+    510.79,
+    499.43,
+    503.0,
+    511.1,
+    515.66,
+    522.38,
+    511.31,
+    506.66,
+    502.1
+   ]
+  },
+  {
+   "round": 12,
+   "headline": "Major customer shifts 30% of its orders to a rival",
+   "tone": "Negative",
+   "facts": [
+    "The lost orders were low-margin entry-level packs",
+    "The same week: a new export contract of similar size at higher margins",
+    "Order book still at a record ₹3,600 crore"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 5.0,
+    "conf": 70,
+    "why": "The lost orders were the least profitable ones and are already replaced by better-margin exports. The profit impact is close to zero.",
+    "review": "Kosha was right: the lost orders were low-margin and already replaced."
+   },
+   "actual": 6.0,
+   "priceBefore": 502.1,
+   "priceAfter": 532.2,
+   "note": "Analysts noted the margin mix improved, and the stock rose.",
+   "path": [
+    502.1,
+    502.67,
+    504.31,
+    499.2,
+    507.85,
+    499.91,
+    489.34,
+    490.63,
+    495.23,
+    498.01,
+    502.8,
+    500.26,
+    502.12,
+    495.68,
+    500.24,
+    502.59,
+    504.98,
+    512.61,
+    518.45,
+    530.17,
+    532.2
+   ]
+  },
+  {
+   "round": 13,
+   "headline": "CFO resigns; auditor flags an inventory mismatch",
+   "tone": "Negative",
+   "facts": [
+    "Inventory mismatch of ₹85 crore under review",
+    "The second senior exit this year",
+    "Quarterly results delayed by two weeks"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 3.0,
+    "conf": 68,
+    "why": "CFO exits are often personal, and an ₹85 crore review is small against ₹2,400 crore of revenue. The selloff risk looks overdone.",
+    "review": "Kosha was wrong: it judged the inventory issue by its size and underweighted how markets punish governance doubts."
+   },
+   "actual": -7.8,
+   "priceBefore": 532.2,
+   "priceAfter": 490.7,
+   "note": "The review widened, and funds cut their holdings.",
+   "path": [
+    532.2,
+    531.57,
+    524.73,
+    529.84,
+    523.58,
+    523.72,
+    525.93,
+    534.13,
+    538.52,
+    537.43,
+    540.09,
+    540.11,
+    534.13,
+    531.75,
+    525.76,
+    524.59,
+    523.37,
+    514.34,
+    505.06,
+    498.27,
+    490.7
+   ]
+  },
+  {
+   "round": 14,
+   "headline": "Popular finfluencer names Taranga a “top EV stock to buy”",
+   "tone": "Positive",
+   "facts": [
+    "The video has 2 million views",
+    "Retail buying surges; volume 5× normal",
+    "No new company information"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -4.0,
+    "conf": 69,
+    "why": "Attention-driven buying without new fundamentals tends to reverse as retail interest fades.",
+    "review": "Kosha was right: retail buying without new information reversed."
+   },
+   "actual": -4.9,
+   "priceBefore": 490.7,
+   "priceAfter": 466.7,
+   "note": "Retail interest faded, and the stock gave back its gains.",
+   "path": [
+    490.7,
+    480.59,
+    467.88,
+    472.69,
+    472.61,
+    476.1,
+    476.33,
+    477.69,
+    472.38,
+    464.46,
+    458.65,
+    461.17,
+    459.69,
+    462.09,
+    471.5,
+    462.97,
+    464.42,
+    468.68,
+    468.32,
+    462.65,
+    466.7
+   ]
+  },
+  {
+   "round": 15,
+   "headline": "Taranga granted a patent for fast-charging battery technology",
+   "tone": "Positive",
+   "facts": [
+    "Pilot with a top-five scooter maker starts next quarter",
+    "The technology cuts charging time by 40%",
+    "R&D spending up 30% this year"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 6.0,
+    "conf": 72,
+    "why": "A pilot with a major customer turns the patent into likely revenue and a real competitive edge.",
+    "review": "Kosha was right: the customer pilot turned the patent into expected revenue."
+   },
+   "actual": 5.4,
+   "priceBefore": 466.7,
+   "priceAfter": 491.9,
+   "note": "Two analysts added the technology to their forecasts.",
+   "path": [
+    466.7,
+    467.67,
+    469.13,
+    471.56,
+    468.33,
+    479.78,
+    475.14,
+    488.04,
+    487.61,
+    491.57,
+    489.81,
+    493.72,
+    502.71,
+    504.71,
+    510.42,
+    515.01,
+    510.54,
+    510.55,
+    499.84,
+    494.88,
+    491.9
+   ]
+  },
+  {
+   "round": 16,
+   "headline": "Heavy monsoon disrupts supply routes in western India",
+   "tone": "Negative",
+   "facts": [
+    "Taranga holds 60 days of inventory",
+    "Its main plants are unaffected",
+    "Logistics costs rise slightly for one month"
+   ],
+   "ai": {
+    "rec": "HOLD",
+    "pred": 0.0,
+    "conf": 64,
+    "why": "The inventory buffer covers the disruption, so the business impact is small. The expected move is below the trading cost.",
+    "review": "Kosha was right: the inventory buffer covered the disruption."
+   },
+   "actual": 0.4,
+   "priceBefore": 491.9,
+   "priceAfter": 493.9,
+   "note": "Operations continued normally, and the stock barely moved.",
+   "path": [
+    491.9,
+    496.18,
+    494.7,
+    499.88,
+    500.03,
+    506.27,
+    504.02,
+    501.21,
+    497.74,
+    484.79,
+    487.89,
+    493.58,
+    502.17,
+    499.77,
+    492.93,
+    492.15,
+    490.63,
+    485.47,
+    494.47,
+    494.1,
+    493.9
+   ]
+  },
+  {
+   "round": 17,
+   "headline": "Promoter sells a 2% stake through a block deal",
+   "tone": "Negative",
+   "facts": [
+    "The company says the sale is for family estate planning",
+    "Buyers: three large mutual funds",
+    "The promoter still holds 51%"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 4.0,
+    "conf": 70,
+    "why": "Large funds absorbing the stake is a vote of confidence, and the promoter keeps majority control. The headline sounds worse than it is.",
+    "review": "Kosha was right: mutual funds buying the stake signaled confidence."
+   },
+   "actual": 4.8,
+   "priceBefore": 493.9,
+   "priceAfter": 517.6,
+   "note": "Fund buying continued after the deal.",
+   "path": [
+    493.9,
+    499.07,
+    501.03,
+    501.64,
+    494.86,
+    498.98,
+    494.68,
+    498.09,
+    494.62,
+    499.66,
+    501.43,
+    508.35,
+    509.11,
+    515.3,
+    520.26,
+    524.34,
+    521.87,
+    515.76,
+    518.51,
+    516.68,
+    517.6
+   ]
+  },
+  {
+   "round": 18,
+   "headline": "Rival launches a battery pack 25% cheaper",
+   "tone": "Negative",
+   "facts": [
+    "The rival’s pack uses a lower-cost chemistry with a shorter life",
+    "Two of Taranga’s customers are testing it",
+    "Taranga says it won’t cut prices"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 2.0,
+    "conf": 66,
+    "why": "Taranga’s longer-life packs justify a premium, and customers rarely switch suppliers quickly. Weakness is a buying opportunity.",
+    "review": "Kosha was wrong: it overestimated customer loyalty when the price gap was this large."
+   },
+   "actual": -6.6,
+   "priceBefore": 517.6,
+   "priceAfter": 483.4,
+   "note": "One customer moved part of its orders to the rival.",
+   "path": [
+    517.6,
+    518.51,
+    511.59,
+    510.03,
+    514.7,
+    512.46,
+    510.67,
+    497.68,
+    499.6,
+    488.48,
+    488.61,
+    484.04,
+    488.2,
+    483.83,
+    485.71,
+    482.55,
+    480.0,
+    478.35,
+    482.26,
+    488.03,
+    483.4
+   ]
+  },
+  {
+   "round": 19,
+   "headline": "Taranga to be added to a major mid-cap index",
+   "tone": "Positive",
+   "facts": [
+    "Inclusion takes effect in four weeks",
+    "Index funds are expected to buy about 1% of shares",
+    "The inclusion was widely expected by analysts"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -3.0,
+    "conf": 67,
+    "why": "The inclusion was widely expected, and traders who bought early tend to sell into the index buying.",
+    "review": "Kosha was right: early buyers sold into the index demand."
+   },
+   "actual": -3.5,
+   "priceBefore": 483.4,
+   "priceAfter": 466.5,
+   "note": "Early buyers sold into the index demand.",
+   "path": [
+    483.4,
+    473.69,
+    479.84,
+    478.31,
+    478.63,
+    479.51,
+    478.08,
+    473.18,
+    469.78,
+    468.06,
+    479.12,
+    460.81,
+    459.36,
+    461.8,
+    464.95,
+    463.12,
+    467.71,
+    468.76,
+    471.18,
+    464.91,
+    466.5
+   ]
+  },
+  {
+   "round": 20,
+   "headline": "Export order from a European two-wheeler maker",
+   "tone": "Positive",
+   "facts": [
+    "Order worth ₹900 crore over three years",
+    "Payment terms: 45 days",
+    "Taranga’s first European customer"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 7.0,
+    "conf": 75,
+    "why": "A large export order with short payment terms opens a new market and improves cash flow.",
+    "review": "Kosha was right: a large order with 45-day payment terms improved both growth and cash flow."
+   },
+   "actual": 7.7,
+   "priceBefore": 466.5,
+   "priceAfter": 502.4,
+   "note": "Analysts raised their export forecasts.",
+   "path": [
+    466.5,
+    468.16,
+    468.44,
+    461.62,
+    459.15,
+    456.55,
+    455.94,
+    467.54,
+    464.11,
+    466.44,
+    469.53,
+    473.73,
+    473.39,
+    478.09,
+    481.82,
+    490.88,
+    491.33,
+    498.65,
+    494.82,
+    502.46,
+    502.4
+   ]
+  },
+  {
+   "round": 21,
+   "headline": "RBI raises interest rates by 0.25%",
+   "tone": "Negative",
+   "facts": [
+    "Most economists expected the hike",
+    "Taranga’s debt is low (debt-to-equity of 0.3)",
+    "The broader market fell 1% on the day"
+   ],
+   "ai": {
+    "rec": "HOLD",
+    "pred": 0.1,
+    "conf": 63,
+    "why": "The hike was expected and Taranga carries little debt. The impact is too small to trade on.",
+    "review": "Kosha was right: an expected hike had little effect on a low-debt company."
+   },
+   "actual": -0.2,
+   "priceBefore": 502.4,
+   "priceAfter": 501.4,
+   "note": "The stock was flat for the month.",
+   "path": [
+    502.4,
+    503.32,
+    495.62,
+    505.25,
+    507.99,
+    499.19,
+    496.68,
+    492.52,
+    503.68,
+    503.41,
+    512.45,
+    514.65,
+    508.58,
+    509.48,
+    509.25,
+    498.32,
+    500.48,
+    504.64,
+    511.55,
+    498.43,
+    501.4
+   ]
+  },
+  {
+   "round": 22,
+   "headline": "Plant expansion delayed by six months",
+   "tone": "Negative",
+   "facts": [
+    "The delay is due to equipment shipping, not weak demand",
+    "Existing plants are running at 78% capacity",
+    "Lower spending this year improves free cash flow"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -3.0,
+    "conf": 67,
+    "why": "A six-month delay signals execution problems, and markets usually punish missed timelines.",
+    "review": "Kosha was wrong: it read the delay as an execution failure and missed the cash-flow upside."
+   },
+   "actual": 3.6,
+   "priceBefore": 501.4,
+   "priceAfter": 519.5,
+   "note": "Analysts focused on the cash-flow benefit, and the stock rose.",
+   "path": [
+    501.4,
+    509.65,
+    503.76,
+    506.25,
+    511.7,
+    505.07,
+    503.17,
+    505.42,
+    507.75,
+    513.47,
+    521.78,
+    521.18,
+    519.43,
+    525.1,
+    523.45,
+    521.1,
+    521.31,
+    516.65,
+    521.05,
+    518.22,
+    519.5
+   ]
+  },
+  {
+   "round": 23,
+   "headline": "Annual results: record profit, dividend doubled",
+   "tone": "Positive",
+   "facts": [
+    "Net profit +31% year on year",
+    "Dividend: ₹6 per share (from ₹3)",
+    "Guidance: 20% revenue growth next year"
+   ],
+   "ai": {
+    "rec": "BUY",
+    "pred": 5.0,
+    "conf": 72,
+    "why": "Record profit, a doubled dividend and strong guidance support further gains.",
+    "review": "Kosha was right: record profit and strong guidance supported further gains."
+   },
+   "actual": 5.8,
+   "priceBefore": 519.5,
+   "priceAfter": 549.6,
+   "note": "The stock reached a new high.",
+   "path": [
+    519.5,
+    517.36,
+    521.46,
+    528.19,
+    539.22,
+    531.39,
+    534.73,
+    537.66,
+    545.47,
+    549.43,
+    549.41,
+    548.66,
+    556.65,
+    564.01,
+    554.89,
+    558.02,
+    554.16,
+    551.13,
+    552.96,
+    550.44,
+    549.6
+   ]
+  },
+  {
+   "round": 24,
+   "headline": "Stock hits a record high; analysts raise targets",
+   "tone": "Positive",
+   "facts": [
+    "P/E now 38 vs sector average of 30",
+    "Three analysts raised targets this week",
+    "Promoters and insiders made no purchases this year"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -5.0,
+    "conf": 70,
+    "why": "At 38 times earnings, well above the sector, the price assumes years of strong execution. With no insider buying, the risk is skewed to the downside.",
+    "review": "Kosha was right: at a premium valuation with no insider buying, profit-taking was likely."
+   },
+   "actual": -5.6,
+   "priceBefore": 549.6,
+   "priceAfter": 518.8,
+   "note": "Profit-taking pulled the stock back from its high.",
+   "path": [
+    549.6,
+    546.43,
+    542.11,
+    537.15,
+    525.91,
+    531.93,
+    524.86,
+    523.86,
+    527.56,
+    524.85,
+    519.71,
+    523.98,
+    527.37,
+    525.16,
+    525.78,
+    531.91,
+    529.25,
+    516.62,
+    510.48,
+    517.84,
+    518.8
+   ]
+  },
+  {
+   "round": 25,
+   "headline": "Quarterly results: revenue grows, but margins slip",
+   "tone": "Negative",
+   "facts": [
+    "Revenue +12% year on year, slower than last quarter",
+    "Operating margin down to 9.8%",
+    "Management kept full-year guidance unchanged"
+   ],
+   "ai": {
+    "rec": "SELL",
+    "pred": -4.0,
+    "conf": 70,
+    "why": "Slowing growth and a margin drop after a strong run usually lead to estimate cuts.",
+    "review": "Kosha was right: slowing growth mattered more than the unchanged guidance."
+   },
+   "actual": -4.5,
+   "priceBefore": 518.8,
+   "priceAfter": 495.5,
+   "note": "Analysts trimmed their estimates.",
+   "path": [
+    518.8,
+    513.25,
+    514.91,
+    505.84,
+    501.86,
+    501.2,
+    507.41,
+    512.18,
+    517.71,
+    514.05,
+    507.7,
+    516.52,
+    518.56,
+    512.71,
+    513.87,
+    500.6,
+    500.48,
+    499.62,
+    491.9,
+    483.47,
+    495.5
+   ]
   }
-};
-
-/*
-  Two counterbalanced orders. Each order has one "error" scenario and nine others.
-
-  For every participant, app.js picks an error round at random (see
-  CONFIG.ERROR_ROUNDS, default rounds 3 to 6) and places the error scenario at
-  that position. The other nine scenarios fill the remaining rounds in the order
-  listed. The error group gets the wrong advice in that round; the control group
-  sees the same scenario in the same position with correct advice, so both groups
-  have identical "before" and "after" windows.
-
-  The error scenarios (S4, S9) were chosen because they produce a large, visible
-  loss when the wrong advice is followed. A Hold-best scenario would make the error
-  almost invisible.
-*/
-const ORDERS = {
-  A: { error: 'S4', others: ['S1', 'S2', 'S3', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'] },
-  B: { error: 'S9', others: ['S6', 'S7', 'S8', 'S10', 'S1', 'S2', 'S3', 'S4', 'S5'] }
+ ]
 };
