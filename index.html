@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Investment decision study</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #eef1f4;
+      --surface: #ffffff;
+      --sunken: #f4f6f8;
+      --ink: #16202c;
+      --muted: #5b6675;
+      --line: #d8dee5;
+      --accent: #1f4e79;
+      --accent-ink: #ffffff;
+      --ai: #4338a8;
+      --ai-bg: #ecebfa;
+      --ai-line: #d6d3f3;
+      --buy: #13795b;   --buy-bg: #e3f2ec;
+      --sell: #b4322e;  --sell-bg: #f8e5e3;
+      --hold: #8a6510;  --hold-bg: #f5eedc;
+      --warn-bg: #fbf3dc;
+      --focus: #2f6fd6;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #10151b;
+        --surface: #18202a;
+        --sunken: #1f2833;
+        --ink: #e6ebf1;
+        --muted: #9aa6b5;
+        --line: #2c3745;
+        --accent: #8db8e8;
+        --accent-ink: #0d1824;
+        --ai: #b3aaf5;
+        --ai-bg: #211f3a;
+        --ai-line: #36325e;
+        --buy: #5fcf9f;   --buy-bg: #14302a;
+        --sell: #f08a83;  --sell-bg: #3a1d1d;
+        --hold: #e4bb5e;  --hold-bg: #33290f;
+        --warn-bg: #332b12;
+        --focus: #8db8e8;
+        color-scheme: dark;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.55;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 18px 56px; }
+    h1, h2 { margin: 0; outline: none; }
+    h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 16px; }
+    h2 { font-size: 1.05rem; line-height: 1.35; font-weight: 600; margin-bottom: 8px; }
+    p { margin: 0 0 10px; }
+    p:last-child { margin-bottom: 0; }
+    strong { font-weight: 600; }
+    .num { font-variant-numeric: tabular-nums; }
+    .muted { color: var(--muted); }
+    .pos { color: var(--buy); }
+    .neg { color: var(--sell); }
+
+    /* Containers: panels are quiet, the advisor and the reveal carry the emphasis */
+    .panel, .case, .advisor, .reveal {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+      margin: 0 0 14px;
+    }
+    fieldset.panel { min-width: 0; }
+    legend { font-weight: 600; padding: 0; margin-bottom: 12px; float: left; width: 100%; }
+    legend + * { clear: both; }
+
+    .intro { margin: 8px 0 18px; }
+    .intro h1 { font-size: 2.1rem; margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); max-width: 32em; }
+    .plain { margin: 12px 0; padding-left: 1.1em; }
+    .plain li { margin: 4px 0; }
+    .prize { background: var(--warn-bg); border-radius: 8px; padding: 10px 12px; }
+    .check { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-weight: 500; cursor: pointer; }
+    .check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+
+    .test-banner {
+      background: var(--warn-bg); color: var(--ink); border-radius: 8px;
+      padding: 8px 12px; font-size: 0.9rem; margin-bottom: 14px;
+    }
+
+    /* Progress */
+    .topbar { display: flex; justify-content: space-between; gap: 12px; font-size: 0.92rem; color: var(--muted); }
+    .topbar strong { color: var(--ink); }
+    .progress { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 8px 0 16px; }
+    .progress span { display: block; height: 100%; background: var(--accent); transition: width 0.4s ease; }
+
+    /* Case */
+    .case-type { color: var(--muted); font-size: 0.9rem; margin-bottom: 2px; }
+    .case-name { font-size: 1.35rem; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .ticker { font-weight: 500; color: var(--muted); font-size: 0.95rem; margin-left: 4px; }
+    .facts { list-style: none; padding: 0; margin: 14px 0 0; border-top: 1px solid var(--line); }
+    .facts li { padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 0.97rem; }
+    .facts li:last-child { border-bottom: 0; padding-bottom: 0; }
+
+    /* AI Advisor */
+    .advisor { background: var(--ai-bg); border-color: var(--ai-line); border-left: 4px solid var(--ai); border-radius: 6px 12px 12px 6px; }
+    .advisor-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 10px; }
+    .advisor-name { font-weight: 600; color: var(--ai); display: inline-flex; align-items: center; gap: 8px; }
+    .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--ai); }
+    .is-analyzing .pulse { animation: pulse 0.9s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: 0.25; transform: scale(0.6); } }
+    .track { font-size: 0.88rem; color: var(--muted); }
+    .analyzing { color: var(--muted); }
+    .advice { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .advice .rec { font-size: 1.05rem; padding: 4px 14px; }
+    .conf { color: var(--muted); font-size: 0.95rem; }
+    .why { margin: 0; }
+
+    .rec {
+      display: inline-block; font-weight: 600; border-radius: 6px; padding: 2px 10px; font-size: 0.95rem;
+    }
+    .rec.BUY { color: var(--buy); background: var(--buy-bg); }
+    .rec.SELL { color: var(--sell); background: var(--sell-bg); }
+    .rec.HOLD { color: var(--hold); background: var(--hold-bg); }
+
+    /* Controls */
+    button { font: inherit; color: inherit; }
+    button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .choice, .scale-btn, .opt {
+      background: var(--sunken); border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+      min-height: 48px; font-weight: 500; transition: background 0.15s, border-color 0.15s;
+    }
+    .choice { font-size: 1.05rem; font-weight: 600; }
+    .choice:disabled, .scale-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .choice.BUY[aria-pressed="true"] { background: var(--buy); border-color: var(--buy); color: var(--surface); }
+    .choice.SELL[aria-pressed="true"] { background: var(--sell); border-color: var(--sell); color: var(--surface); }
+    .choice.HOLD[aria-pressed="true"] { background: var(--hold); border-color: var(--hold); color: var(--surface); }
+    .spaced { margin-top: 20px; }
+    .scale { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .scale-btn { min-height: 44px; font-variant-numeric: tabular-nums; }
+    .scale-btn[aria-pressed="true"], .opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .scale-ends { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+    .options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .opt { padding: 10px 14px; text-align: left; }
+
+    .btn {
+      display: block; width: 100%; min-height: 52px; border: 0; border-radius: 10px; cursor: pointer;
+      background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 1.05rem; margin-top: 6px;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-quiet { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .actions { display: grid; gap: 10px; }
+
+    /* Instructions */
+    .rules { margin: 12px 0; display: grid; gap: 8px; }
+    .rules div { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 10px; }
+    .rules dt, .rules dd { margin: 0; }
+    .example { border-collapse: collapse; margin: 14px 0; width: 100%; max-width: 280px; }
+    .example caption { text-align: left; color: var(--muted); font-size: 0.9rem; padding-bottom: 6px; }
+    .example th, .example td { text-align: left; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .example td { text-align: right; font-weight: 600; }
+    .feedback { margin-top: 12px; min-height: 1.5em; }
+    .feedback.ok { color: var(--buy); }
+    .feedback.bad { color: var(--sell); }
+
+    /* Outcome reveal: the one loud element */
+    .reveal { text-align: left; }
+    .reveal-label { font-size: 0.95rem; font-weight: 500; color: var(--muted); margin-bottom: 0; }
+    .reveal-move { font-size: clamp(2.8rem, 12vw, 4rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; margin: 4px 0 8px; }
+    .reveal-move.up { color: var(--buy); }
+    .reveal-move.down { color: var(--sell); }
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal-move { animation: rise 0.45s ease-out both; }
+      @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+    }
+
+    .verdict { border-radius: 10px; padding: 12px 16px; margin: 0 0 14px; font-weight: 600; }
+    .verdict-ok { background: var(--buy-bg); color: var(--buy); }
+    .verdict-bad { background: var(--sell-bg); color: var(--sell); border: 1px solid var(--sell); }
+
+    .ledger { margin: 0; }
+    .ledger div { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .ledger div:first-child { padding-top: 0; }
+    .ledger div:last-child { border-bottom: 0; padding-bottom: 0; color: var(--muted); }
+    .ledger dt, .ledger dd { margin: 0; }
+    .ledger dd { text-align: right; }
+
+    .status { border-radius: 10px; padding: 12px 16px; margin: 0 0 12px; }
+    .status.ok { background: var(--buy-bg); color: var(--buy); }
+    .status.warn { background: var(--warn-bg); }
+    .status.bad { background: var(--sell-bg); color: var(--sell); }
+    .code { font-size: 1.05rem; letter-spacing: 0.04em; }
+
+    @media (max-width: 400px) {
+      main { padding: 16px 14px 48px; }
+      .intro h1 { font-size: 1.8rem; }
+      .scale { gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <noscript>This study needs JavaScript. Please enable it and reload the page.</noscript>
+  </main>
+  <script src="scenarios.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
